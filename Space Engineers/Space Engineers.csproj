@@ -78,7 +78,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ControlPanelOnOffDisplays.cs" />
     <Compile Include="Accident Timer.cs" />
+    <Compile Include="BatteryDisplay.cs" />
+    <Compile Include="IntegrityDisplay.cs" />
+    <Compile Include="ToolieProG.cs" />
+    <Compile Include="TestProg.cs" />
+    <Compile Include="Thrusters script.cs" />
     <Compile Include="ScottyProg.cs" />
     <Compile Include="KeepHorizon.cs" />
     <Compile Include="IntegrityOrBattery.cs" />
