@@ -18,7 +18,7 @@ namespace SpaceEngineers.DiggyProG
 {
     public sealed class Program : MyGridProgram
     {
-        const double DiggyMass = 124848;
+        const double DiggyMass = 135000;
         const double DiggyMassMax = 520000;
         const string CockpitName = "Diggy Cockpit";
         const string ConnectorName = "Diggy Connector";
@@ -33,7 +33,6 @@ namespace SpaceEngineers.DiggyProG
         IMyTextSurface m_CockpitBatteryDamagePanel;
         List<IMyBatteryBlock> m_Batteries = new List<IMyBatteryBlock>();
         IMyTextSurface m_CockpitCargoPanel;
-        List<IMyCargoContainer> m_Containers = new List<IMyCargoContainer>();
         List<KeyValuePair<IMyTerminalBlock, IMySlimBlock>> m_AllBlocks = new List<KeyValuePair<IMyTerminalBlock, IMySlimBlock>>();
         List<IMyGyro> m_Gyros;
         private bool m_AutoHorizon = false;
@@ -46,17 +45,16 @@ namespace SpaceEngineers.DiggyProG
 
             m_CockpitBatteryDamagePanel = m_Cockpit.GetSurface(IntegrityBatteryDisplayIndex);
             m_CockpitBatteryDamagePanel.Alignment = VRage.Game.GUI.TextPanel.TextAlignment.CENTER;
-            GridTerminalSystem.GetBlocksOfType(m_Batteries, a => a is IMyBatteryBlock);
+            GridTerminalSystem.GetBlocksOfType(m_Batteries, a => a is IMyBatteryBlock && a.IsSameConstructAs(m_Cockpit));
 
             m_CockpitCargoPanel = m_Cockpit.GetSurface(CargoCheckDisplayIndex);
             m_CockpitCargoPanel.Alignment = VRage.Game.GUI.TextPanel.TextAlignment.CENTER;
-            GridTerminalSystem.GetBlocksOfType(m_Containers, a => a is IMyCargoContainer && a != m_Cockpit);
 
             m_Gyros = new List<IMyGyro>();
             GridTerminalSystem.GetBlocksOfType(m_Gyros, a => a.IsSameConstructAs(m_Cockpit));
 
             var allBlocks = new List<IMyTerminalBlock>();
-            GridTerminalSystem.GetBlocksOfType<IMyTerminalBlock>(allBlocks);
+            GridTerminalSystem.GetBlocksOfType<IMyTerminalBlock>(allBlocks, a => a.IsSameConstructAs(m_Cockpit));
             foreach (var block in allBlocks)
                 m_AllBlocks.Add(new KeyValuePair<IMyTerminalBlock, IMySlimBlock>(block, block.CubeGrid.GetCubeBlock(block.Position)));
 
@@ -65,10 +63,8 @@ namespace SpaceEngineers.DiggyProG
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
         }
 
-        void Main(string arg, UpdateType uType)
+        void Main(string args, UpdateType uType)
         {
-            
-
             //Batteries
             float currentBatteryVolume = 0.0f;
             float maxBatteryVolume = 0.0f;
@@ -86,7 +82,7 @@ namespace SpaceEngineers.DiggyProG
             CargoDisplay(m_CockpitCargoPanel);
 
             //KeepHorizon
-            KeepHorizon(arg, ref m_AutoHorizon, m_Cockpit, m_Gyros);
+            KeepHorizon(args, ref m_AutoHorizon, m_Cockpit, m_Gyros);
 
             //UnloadCargo
             UnloadCargo();
@@ -122,12 +118,16 @@ namespace SpaceEngineers.DiggyProG
             double currentCargoVolume = .0;
             double maxCargoVolume = .0;
             double currentCargoMass = .0;
-            foreach (var container in m_Containers)
+
+            foreach (var pair in m_AllBlocks)
             {
-                var inv = container.GetInventory();
-                maxCargoVolume += (double)(inv.MaxVolume);
-                currentCargoVolume += (double)(inv.CurrentVolume);
-                currentCargoMass += (double)inv.CurrentMass;
+                if (pair.Key.HasInventory)
+                {
+                    var inv = pair.Key.GetInventory();
+                    maxCargoVolume += (double)(inv.MaxVolume);
+                    currentCargoVolume += (double)(inv.CurrentVolume);
+                    currentCargoMass += (double)inv.CurrentMass;
+                }
             }
             var filledVolume = (double)((currentCargoVolume / maxCargoVolume) * 100);
             var filledMass = (double)((currentCargoMass / (DiggyMassMax - DiggyMass)) * 100);
