@@ -19,6 +19,17 @@ namespace SpaceEngineers.FactoryControl
 {
     public sealed class Program : MyGridProgram
     {
+        const string MainCargoName = "Factory Main Cargo";
+        const string ToolsCargoName = "Factory Tools Cargo";
+        const string MainAssemblerName = "Factory Assembler Main";
+        const string MainGasGeneratorName = "Factory O2/H2 Generator Main";
+        const string OresIngotsLcdName = "Factory LCD Ores Ingots";
+        const string ComponentsLcdName = "Factory LCD Components";
+
+        const int SteelPlatesOrderTarget = 20000;
+        const int OtherComponentsOrderTarget = 1000;
+        const int IngotsInAssemblies = 100;
+
         private class MyItemTypeComparer : IComparer<MyItemType>
         {
             public int Compare(MyItemType x, MyItemType y)
@@ -26,7 +37,7 @@ namespace SpaceEngineers.FactoryControl
                 return GetTypeSortorder(x).CompareTo(GetTypeSortorder(y));
             }
 
-            private int GetTypeSortorder(MyItemType itemType)
+            public static int GetTypeSortorder(MyItemType itemType)
             {
                 var sortOrder = int.MaxValue;
                 switch (itemType.TypeId)
@@ -39,27 +50,27 @@ namespace SpaceEngineers.FactoryControl
                         sortOrder = 1000;
                         switch (itemType.SubtypeId)
                         {
-                            case SubtypeIronIngot:
+                            case SubTypeIdIronIngot:
                                 sortOrder += 1;
                                 break;
 
-                            case SubtypeNickelIngot:
+                            case SubTypeIdNickelIngot:
                                 sortOrder += 2;
                                 break;
 
-                            case SubtypeSiliconIngot:
+                            case SubTypeIdSiliconIngot:
                                 sortOrder += 3;
                                 break;
 
-                            case SubtypeCobaltIngot:
+                            case SubTypeIdCobaltIngot:
                                 sortOrder += 4;
                                 break;
 
-                            case SubtypeSilverIngot:
+                            case SubTypeIdSilverIngot:
                                 sortOrder += 5;
                                 break;
 
-                            case SubtypeStoneIngot:
+                            case SubTypeIdStoneIngot:
                                 sortOrder += 10;
                                 break;
 
@@ -85,6 +96,50 @@ namespace SpaceEngineers.FactoryControl
                                 sortOrder += 3;
                                 break;
 
+                            case SubTypeIdComputer:
+                                sortOrder += 4;
+                                break;
+
+                            case SubTypeIdMotor:
+                                sortOrder += 5;
+                                break;
+
+                            case SubTypeIdMetalGrid:
+                                sortOrder += 6;
+                                break;
+
+                            case SubTypeIdSmallTube:
+                                sortOrder += 7;
+                                break;
+
+                            case SubTypeIdLargeTube:
+                                sortOrder += 8;
+                                break;
+
+                            case SubTypeIdDisplay:
+                                sortOrder += 9;
+                                break;
+
+                            case SubTypeIdGirder:
+                                sortOrder += 10;
+                                break;
+
+                            case SubTypeIdDetector:
+                                sortOrder += 11;
+                                break;
+
+                            case SubTypeIdRadioCommunication:
+                                sortOrder += 12;
+                                break;
+
+                            case SubTypeIdBulletproofBlass:
+                                sortOrder += 13;
+                                break;
+
+                            case SubTypeIdPowerCell:
+                                sortOrder += 14;
+                                break;
+
                             default:
                                 sortOrder += 100;
                                 break;
@@ -96,19 +151,21 @@ namespace SpaceEngineers.FactoryControl
             }
         }
 
+        #region TypeIds
+
         const string TypeIdOres = "MyObjectBuilder_Ore";
 
         const string TypeIdIngots = "MyObjectBuilder_Ingot";
-        const string SubtypeIronIngot = "Iron";
-        const string SubtypeNickelIngot = "Nickel";
-        const string SubtypeSiliconIngot = "Silicon";
-        const string SubtypeCobaltIngot = "Cobalt";
-        const string SubtypeSilverIngot = "Silver";
-        const string SubtypeStoneIngot = "Stone";
-        static readonly MyItemType TypeIron = new MyItemType(TypeIdIngots, SubtypeIronIngot);
-        static readonly MyItemType TypeNickel = new MyItemType(TypeIdIngots, SubtypeNickelIngot);
-        static readonly MyItemType TypeSilicon = new MyItemType(TypeIdIngots, SubtypeSiliconIngot);
-        static readonly MyItemType TypeCobalt = new MyItemType(TypeIdIngots, SubtypeCobaltIngot);
+        const string SubTypeIdIronIngot = "Iron";
+        const string SubTypeIdNickelIngot = "Nickel";
+        const string SubTypeIdSiliconIngot = "Silicon";
+        const string SubTypeIdCobaltIngot = "Cobalt";
+        const string SubTypeIdSilverIngot = "Silver";
+        const string SubTypeIdStoneIngot = "Stone";
+        static readonly MyItemType TypeIron = new MyItemType(TypeIdIngots, SubTypeIdIronIngot);
+        static readonly MyItemType TypeNickel = new MyItemType(TypeIdIngots, SubTypeIdNickelIngot);
+        static readonly MyItemType TypeSilicon = new MyItemType(TypeIdIngots, SubTypeIdSiliconIngot);
+        static readonly MyItemType TypeCobalt = new MyItemType(TypeIdIngots, SubTypeIdCobaltIngot);
 
         const string TypeIdComponents = "MyObjectBuilder_Component";
         const string SubTypeIdSteelPlate = "SteelPlate";
@@ -123,6 +180,8 @@ namespace SpaceEngineers.FactoryControl
         const string SubTypeIdDetector = "Detector";
         const string SubTypeIdDisplay = "Display";
         const string SubTypeIdRadioCommunication = "RadioCommunication";
+        const string SubTypeIdGirder = "Girder";
+        const string SubTypeIdBulletproofBlass = "BulletproofGlass";
 
         static readonly MyItemType TypeSteelPlate = new MyItemType(TypeIdComponents, SubTypeIdSteelPlate);
         static readonly MyItemType TypeInteriorPlate = new MyItemType(TypeIdComponents, SubTypeIdInteriorPlate);
@@ -136,39 +195,63 @@ namespace SpaceEngineers.FactoryControl
         static readonly MyItemType TypeDetector = new MyItemType(TypeIdComponents, SubTypeIdDetector);
         static readonly MyItemType TypeDisplay = new MyItemType(TypeIdComponents, SubTypeIdDisplay);
         static readonly MyItemType TypeRadioCommunication = new MyItemType(TypeIdComponents, SubTypeIdRadioCommunication);
+        static readonly MyItemType TypeGirder = new MyItemType(TypeIdComponents, SubTypeIdGirder);
+        static readonly MyItemType TypeBulletproofGlass = new MyItemType(TypeIdComponents, SubTypeIdBulletproofBlass);
 
-        static readonly MyFixedPoint MinIngotsInAssemblies = new MyFixedPoint() { RawValue = 100000000 };
+        const string SubTypeIdHydrogenBottle = "HydrogenBottle";
+        const string SubTypeIdOxygenBottle = "OxygenBottle";
+
+        #endregion
+
+        static readonly MyFixedPoint MinIngotsInAssemblies = new MyFixedPoint() { RawValue = IngotsInAssemblies * 1000000 };
 
         IMyCargoContainer m_MainCargoContainer;
+        IMyCargoContainer m_ToolsCargoContainer;
+
         IMyAssembler m_MainAssembler;
+        IMyGasGenerator m_MainGasGenerator;
+
         List<IMyAssembler> m_Assemblers = new List<IMyAssembler>();
         List<IMyRefinery> m_Refineries = new List<IMyRefinery>();
 
         IMyTextSurface m_FrontLcdOres;
         IMyTextSurface m_FrontLcdComponents;
-        IMyTextSurface m_FrontLcdItems;
-
-        List<KeyValuePair<IMyTerminalBlock, IMySlimBlock>> m_AllBlocks = new List<KeyValuePair<IMyTerminalBlock, IMySlimBlock>>();
 
         MyItemTypeComparer m_ItemComparer = new MyItemTypeComparer();
 
-        private string m_ItemBlueprintSubtype = string.Empty;
+        string m_ItemBlueprintSubtype = string.Empty;
+        List<MyItemType> m_OrderList;
 
         public Program()
         {
-            m_MainCargoContainer = GridTerminalSystem.GetBlockWithName("Alpha Main Cargo") as IMyCargoContainer;
-            GridTerminalSystem.GetBlocksOfType(m_Assemblers, a => a is IMyAssembler);
-            m_MainAssembler = m_Assemblers.First(a => a.CustomName == "Assembler Main");
-            GridTerminalSystem.GetBlocksOfType(m_Refineries, a => a is IMyRefinery);
+            m_MainCargoContainer = GridTerminalSystem.GetBlockWithName(MainCargoName) as IMyCargoContainer;
+            m_ToolsCargoContainer = GridTerminalSystem.GetBlockWithName(ToolsCargoName) as IMyCargoContainer;
 
-            m_FrontLcdOres = GridTerminalSystem.GetBlockWithName("Alpha LCD Ores Ingots") as IMyTextSurface;
-            m_FrontLcdComponents = GridTerminalSystem.GetBlockWithName("Alpha LCD Components") as IMyTextSurface;
-            m_FrontLcdItems = GridTerminalSystem.GetBlockWithName("Alpha LCD Items") as IMyTextSurface;
+            GridTerminalSystem.GetBlocksOfType(m_Assemblers, a => (a is IMyAssembler && a.CubeGrid == m_MainCargoContainer.CubeGrid));
+            GridTerminalSystem.GetBlocksOfType(m_Refineries, a => (a is IMyRefinery && a.CubeGrid == m_MainCargoContainer.CubeGrid));
 
-            var allBlocks = new List<IMyTerminalBlock>();
-            GridTerminalSystem.GetBlocksOfType<IMyTerminalBlock>(allBlocks);
-            foreach (var block in allBlocks)
-                m_AllBlocks.Add(new KeyValuePair<IMyTerminalBlock, IMySlimBlock>(block, block.CubeGrid.GetCubeBlock(block.Position)));
+            m_MainAssembler = m_Assemblers.First(a => a.CustomName == MainAssemblerName);
+            m_MainGasGenerator = GridTerminalSystem.GetBlockWithName(MainGasGeneratorName) as IMyGasGenerator;
+
+            m_FrontLcdOres = GridTerminalSystem.GetBlockWithName(OresIngotsLcdName) as IMyTextSurface;
+            m_FrontLcdComponents = GridTerminalSystem.GetBlockWithName(ComponentsLcdName) as IMyTextSurface;
+
+            #region Лист заказов кроме стальных пластин
+            m_OrderList = new List<MyItemType>();
+            m_OrderList.Add(TypeInteriorPlate);
+            m_OrderList.Add(TypeConstructionComponent);
+            m_OrderList.Add(TypeMetalGrid);
+            m_OrderList.Add(TypeComputer);
+            m_OrderList.Add(TypeLargeTube);
+            m_OrderList.Add(TypeSmallTube);
+            m_OrderList.Add(TypeMotor);
+            m_OrderList.Add(TypeDisplay);
+            m_OrderList.Add(TypePowerCell);
+            m_OrderList.Add(TypeGirder);
+            m_OrderList.Add(TypeDetector);
+            m_OrderList.Add(TypeRadioCommunication);
+            m_OrderList.Add(TypeBulletproofGlass);
+            #endregion
 
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
         }
@@ -176,6 +259,7 @@ namespace SpaceEngineers.FactoryControl
         public void Main(string args)
         {
             var mainInventory = m_MainCargoContainer.GetInventory(0);
+            var toolInventory = m_ToolsCargoContainer.GetInventory(0);
 
             //Сбор произведённого из ассемблеров и рефайнери
             foreach (var assembler in m_Assemblers)
@@ -198,6 +282,56 @@ namespace SpaceEngineers.FactoryControl
             //Раздача слитков по ассемблерам
             AddIngotsToAssemblers();
 
+            //Отправка тулзов в контейнер с тулзами, а баллонов в водородник
+            bool sorted = false;
+            while (!sorted)
+            {
+                sorted = true;
+                for (int i = mainInventory.ItemCount - 1; i >= 0; --i)
+                {
+                    var item = mainInventory.GetItemAt(i);
+                    if (!item.HasValue)
+                    {
+                        Echo("!item.HasValue exception");
+                        break;
+                    }
+                    if (item.Value.Type.TypeId != TypeIdOres &&
+                        item.Value.Type.TypeId != TypeIdIngots &&
+                        item.Value.Type.TypeId != TypeIdComponents)
+                    {
+                        if (item.Value.Type.SubtypeId == SubTypeIdHydrogenBottle ||
+                            item.Value.Type.SubtypeId == SubTypeIdOxygenBottle)
+                            m_MainGasGenerator.GetInventory(0).TransferItemFrom(mainInventory, item.Value);
+                        else
+                            toolInventory.TransferItemFrom(mainInventory, item.Value);
+
+                        sorted = false;
+                    }
+                    else
+                    {
+                        MyInventoryItem? prevItem;
+                        if (i != 0 && (prevItem = mainInventory.GetItemAt(i - 1)).HasValue)
+                        {
+                            if (prevItem.Value.Type == item.Value.Type)
+                            {
+                                mainInventory.TransferItemFrom(mainInventory, i, i - 1, true);
+                                sorted = false;
+                            }
+                            else
+                            {
+                                var itemSortOrder = MyItemTypeComparer.GetTypeSortorder(item.Value.Type);
+                                var prevSortOrder = MyItemTypeComparer.GetTypeSortorder(prevItem.Value.Type);
+                                if (itemSortOrder < prevSortOrder)
+                                {
+                                    mainInventory.TransferItemFrom(mainInventory, i, i - 1);
+                                    sorted = false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             //Подсчёт всех ресурсов на базе
             var resourcesOnFactory = new Dictionary<MyItemType, MyFixedPoint>();
             SummaryItemsOnFactory(resourcesOnFactory);
@@ -209,35 +343,13 @@ namespace SpaceEngineers.FactoryControl
         private void OrderInAssemblers(Dictionary<MyItemType, MyFixedPoint> resourcesOnFactory)
         {
             var steelPlates = TypeSteelPlate;
-            OrderItemType(resourcesOnFactory, steelPlates, 20000);
-            var otherItems = new List<MyItemType>();
-            otherItems.Add(TypeInteriorPlate);
-            otherItems.Add(TypeConstructionComponent);
-            otherItems.Add(TypeComputer);
-            otherItems.Add(TypeMotor);
-            otherItems.Add(TypeMetalGrid);
-            otherItems.Add(TypePowerCell);
-            otherItems.Add(TypeLargeTube);
-            otherItems.Add(TypeSmallTube);
-            otherItems.Add(TypeDetector);
-            otherItems.Add(TypeDisplay);
-            otherItems.Add(TypeRadioCommunication);
+            OrderItemType(resourcesOnFactory, steelPlates, SteelPlatesOrderTarget);
 
-            foreach (var item in otherItems)
+            foreach (var item in m_OrderList)
             {
-                OrderItemType(resourcesOnFactory, item, 1000);
+                OrderItemType(resourcesOnFactory, item, OtherComponentsOrderTarget);
             }
-
-            //if (m_ItemBlueprintSubtype == string.Empty)
-            //{
-            //    if (!m_MainAssembler.IsQueueEmpty)
-            //    {
-            //        var list = new List<MyProductionItem>();
-            //        m_MainAssembler.GetQueue(list);
-            //        m_ItemBlueprintSubtype = list.First().BlueprintId.SubtypeId.ToString();
-            //    }
-            //}
-            //Echo(m_ItemBlueprintSubtype);
+            Echo(m_LastOrder);
         }
 
         private string m_LastOrder = string.Empty;
@@ -265,7 +377,6 @@ namespace SpaceEngineers.FactoryControl
                     m_MainAssembler.AddQueueItem(blueprintDef, (decimal)(m_Assemblers.Count * 10));
                 }
             }
-            Echo(m_LastOrder);
         }
 
         private string GetBlueprintName(MyItemType itemType)
@@ -275,9 +386,11 @@ namespace SpaceEngineers.FactoryControl
                 case TypeIdComponents:
                     switch (itemType.SubtypeId)
                     {
+                        case SubTypeIdConstructionComponent:
                         case SubTypeIdComputer:
                         case SubTypeIdDetector:
                         case SubTypeIdMotor:
+                        case SubTypeIdGirder:
                         case SubTypeIdRadioCommunication:
                             return string.Format("{0}Component", itemType.SubtypeId);
                     }
@@ -308,7 +421,7 @@ namespace SpaceEngineers.FactoryControl
             var ores = new List<KeyValuePair<MyItemType, MyFixedPoint>>();
             var ingots = new List<KeyValuePair<MyItemType, MyFixedPoint>>();
             var components = new List<KeyValuePair<MyItemType, MyFixedPoint>>();
-            var otherItems = new List<KeyValuePair<MyItemType, MyFixedPoint>>();
+            var otherItems = new List<KeyValuePair<MyItemType, MyFixedPoint>>(); //Currently
 
             foreach (var pair in resourcesOnFactory)
             {
@@ -354,34 +467,6 @@ namespace SpaceEngineers.FactoryControl
                 textString += AddItemNameAmountString(pair.Key, pair.Value);
             }
             m_FrontLcdComponents.WriteText(textString);
-
-            textString = "=== ITEMS ===\n";
-            foreach (var pair in otherItems)
-            {
-                textString += AddItemNameAmountString(pair.Key, pair.Value);
-            }
-
-            textString += "\n=== INTEGRITY ===\n";
-            var damagedBlocks = new List<IMyTerminalBlock>();
-            foreach (var pair in m_AllBlocks)
-            {
-                if (!pair.Value.IsFullIntegrity)
-                {
-                    damagedBlocks.Add(pair.Key);
-                }
-            }
-            if (damagedBlocks.Count == 0)
-                textString += "All blocks undamaged! ;)\n";
-            else
-            {
-                textString += "!!! Damaged Blocks !!!\n";
-                foreach (var block in damagedBlocks)
-                {
-                    block.ShowOnHUD = true;
-                    textString += string.Format("{0}: {1}\n", block.CubeGrid.DisplayName, block.CustomName);
-                }
-            }
-            m_FrontLcdItems.WriteText(textString);
         }
 
         private static void AddItemsToDictionary(Dictionary<MyItemType, MyFixedPoint> resourcesOnFactory, IMyTerminalBlock block)
@@ -418,27 +503,27 @@ namespace SpaceEngineers.FactoryControl
                 case TypeIdIngots:
                     switch (itemType.SubtypeId)
                     {
-                        case SubtypeIronIngot:
+                        case SubTypeIdIronIngot:
                             name = "Iron Ingots";
                             break;
 
-                        case SubtypeNickelIngot:
+                        case SubTypeIdNickelIngot:
                             name = "Nickel Ingots";
                             break;
 
-                        case SubtypeSiliconIngot:
+                        case SubTypeIdSiliconIngot:
                             name = "Silicon Ingots";
                             break;
 
-                        case SubtypeCobaltIngot:
+                        case SubTypeIdCobaltIngot:
                             name = "Cobalt Ingots";
                             break;
 
-                        case SubtypeSilverIngot:
+                        case SubTypeIdSilverIngot:
                             name = "Silver Ingots";
                             break;
 
-                        case SubtypeStoneIngot:
+                        case SubTypeIdStoneIngot:
                             name = "Gravel";
                             break;
 
